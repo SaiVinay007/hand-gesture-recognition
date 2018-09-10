@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-Hand_image = cv2.imread('/home/saivinay/Documents/hand_gesture/four.jpeg')
+Hand_image = cv2.imread('/home/saivinay/Documents/hand_gesture/opencv/five.jpg')
 image_YCrCb_format = cv2.cvtColor(Hand_image,cv2.COLOR_BGR2YCrCb)
 
 #  Taking the general range of skin color 
@@ -50,21 +50,37 @@ cv2.drawContours(draw_contours, contours, num, (255,0,0), 3)
 cv2.fillPoly(draw_contours, pts =[contours[num]], color=(255,255,255))
 
 check_convexity = gaussian
+
+# Here, cv.convexHull() function checks a curve for convexity defects and corrects it.
+# Generally speaking, convex curves are the curves which are always bulged out, or at-least flat.
+# And if it is bulged inside, it is called convexity defects.
 hull = cv2.convexHull(contours[num],returnPoints = False)
+
+
+# It returns an array where each row contains these values - [ start point, end point, farthest point, approximate distance to farthest point ].
+# We can visualize it using an image. We draw a line joining start point and end point, then draw a circle at the farthest point.
+# Remember first three values returned are indices of cnt. So we have to bring those values from cnt.
 defects = cv2.convexityDefects(contours[num],hull)
-print((defects))
+
+print(defects)
 # print(hull)
 print(defects.shape[0])
 
+Number_of_fingers = 1 
 for i in range(defects.shape[0]):
     s,e,f,d = defects[i,0]
     start = tuple(contours[num][s][0])
     end = tuple(contours[num][e][0])
     far = tuple(contours[num][f][0])
     cv2.line(draw_contours,start,end,[0,255,0],2)
-    cv2.circle(draw_contours,far,5,[0,0,255],-1)
+    print(start)
+    cv2.circle(draw_contours,start,5,[0,0,255],-1)
 
+    if d > 7000 :
+        cv2.circle(draw_contours,far,5,[0,0,255],-1)
+        Number_of_fingers += 1
 
+print ("Number of fingers = "+str(Number_of_fingers) ) 
 
 cv2.imshow('gaussian',gaussian)
 # cv2.imshow('image_YCrCb_format',image_YCrCb_format)
@@ -72,10 +88,6 @@ cv2.imshow('gaussian',gaussian)
 # cv2.imshow('roi_image',roi_image)
 cv2.imshow('draw_contours',draw_contours)
 # cv2.imshow('edges',edges)
-
-
-
-cv2.imshow('defects',defects)
 
 k = cv2.waitKey(70000) & 0xFF
 cv2.destroyAllWindows()
