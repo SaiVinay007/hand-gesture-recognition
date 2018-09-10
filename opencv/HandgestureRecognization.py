@@ -106,7 +106,7 @@ from matplotlib import pyplot as plt
 
 cap = cv2.VideoCapture(0)
 
-while(True):
+while(cap.read()):
     # for i in range(10):
     
     #     ret,frame = cap.read()
@@ -115,7 +115,7 @@ while(True):
     # frame = frame/10
 
     ret,frame = cap.read()
-    
+    # print(ret)
 
     image_YCrCb_format = cv2.cvtColor(frame,cv2.COLOR_BGR2YCrCb)
 
@@ -126,7 +126,7 @@ while(True):
     mask = cv2.inRange(image_YCrCb_format,lower_skin_color,upper_skin_color)
     roi_image = cv2.bitwise_and(image_YCrCb_format,image_YCrCb_format,mask = mask)
     
-    edges = cv2.Canny(mask,100,200)
+    edges = cv2.Canny(roi_image,100,200)
     
     # To make the un conneted points connected to the nearest points
     gaussian = cv2.GaussianBlur(mask,(5,5),0)
@@ -150,17 +150,17 @@ while(True):
             max  = len(contour)
             num = i
     
-    print(contours[num])
+    # print(contours[num])
     max_area = cv2.contourArea(contours[num])
     # print(max_area)
     
     
-    # To draw all contours pass -1 in place of num
+    # To draw all contours pass -1 in place of num. Now it is drawing only for the largest contour
     draw_contours = roi_image
     cv2.drawContours(draw_contours, contours, num, (255,0,0), 3)
     # print(len(draw_contours))
     
-    # Used for filling the space inside of the contour
+    # Used for filling the space inside of the contour eith the given color
     cv2.fillPoly(draw_contours, pts =[contours[num]], color=(255,255,255))
     
     check_convexity = gaussian
@@ -181,33 +181,35 @@ while(True):
     # print(defects.shape[0])   
     
     Number_of_fingers = 0
-    for i in range(defects.shape[0]):
-        s,e,f,d = defects[i,0]
-        start = tuple(contours[num][s][0])
-        end = tuple(contours[num][e][0])
-        far = tuple(contours[num][f][0])
-        cv2.line(draw_contours,start,end,[0,255,0],2)
-        # print(start)
-        # cv2.circle(draw_contours,start,5,[0,0,255],-1)
+    if defects is not None:
+        for i in range(defects.shape[0]):
+            s,e,f,d = defects[i,0]
+            start = tuple(contours[num][s][0])
+            end = tuple(contours[num][e][0])
+            far = tuple(contours[num][f][0])
+            cv2.line(draw_contours,start,end,[0,255,0],2)
+            # print(start)
+            # cv2.circle(draw_contours,start,5,[0,0,255],-1)
+
+            if d > 10000 :
+                cv2.circle(draw_contours,far,5,[0,0,255],-1)
+                Number_of_fingers += 1
     
-        if d > 10000 :
-            cv2.circle(draw_contours,far,5,[0,0,255],-1)
-            Number_of_fingers += 1
-    
-    print ("Number of fingers = "+str(Number_of_fingers) ) 
+    if Number_of_fingers > 0:
+        print ("Number of fingers = "+str(Number_of_fingers) ) 
     
     
     cv2.imshow("origial_image",frame)
     # cv2.imshow('gaussian',gaussian)
-    # cv2.imshow('image_YCrCb_format',image_YCrCb_format)
-    # cv2.imshow('mask',mask)
+    cv2.imshow('image_YCrCb_format',image_YCrCb_format)
+    cv2.imshow('mask',mask)
     # cv2.imshow('roi_image',roi_image)
     cv2.imshow('draw_contours',draw_contours)
-    # cv2.imshow('edges',edges)
+    cv2.imshow('edges',edges)
     
     # k = cv2.waitKey(1) & 0xFF
 
-    if cv2.waitKey(1000) & 0xFF == ord('q'):
+    if cv2.waitKey(10) & 0xFF == ord('q'):
         break
     
     
